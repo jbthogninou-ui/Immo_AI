@@ -1,0 +1,203 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Jetons de design — la bascule clair/sombre passe uniquement par ces
+   variables, aucun composant ne code une couleur de surface en dur.
+   ========================================================================== */
+@layer base {
+  :root {
+    --canvas: 250 247 242; /* sable */
+    --surface: 255 255 255;
+    --surface-2: 246 243 237;
+    --surface-3: 237 245 243;
+    --line: 226 220 210;
+    --line-strong: 205 197 184;
+    --content: 16 31 28;
+    --content-muted: 90 106 102;
+    --content-subtle: 138 150 146;
+    --shadow-color: 8 48 43;
+  }
+
+  .dark {
+    --canvas: 6 20 18;
+    --surface: 10 28 25;
+    --surface-2: 14 38 34;
+    --surface-3: 18 48 42;
+    --line: 27 60 53;
+    --line-strong: 40 82 73;
+    --content: 233 242 239;
+    --content-muted: 154 178 172;
+    --content-subtle: 110 135 129;
+    --shadow-color: 0 0 0;
+  }
+
+  * {
+    border-color: rgb(var(--line));
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-content antialiased;
+    font-feature-settings: 'ss01', 'cv01';
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    @apply bg-brass-300/50 text-ink;
+  }
+
+  /* Focus visible cohérent sur toute l'application */
+  :focus-visible {
+    @apply outline-none ring-2 ring-brass-500 ring-offset-2;
+    --tw-ring-offset-color: rgb(var(--canvas));
+  }
+
+  /* Barres de défilement discrètes */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-line-strong/60;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-lagoon-400/60;
+    background-clip: content-box;
+  }
+
+  /* Respect des préférences d'accessibilité */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* ---- Surtitres : petites capitales espacées, sur rail de laiton ------- */
+  .eyebrow {
+    @apply inline-flex items-center gap-2 font-mono text-2xs font-medium uppercase tracking-[0.18em] text-brass-600 dark:text-brass-300;
+  }
+  .eyebrow::before {
+    content: '';
+    @apply h-px w-6 bg-brass-500/60;
+  }
+
+  /* ---- Signature : encadrement « fiche cadastrale » -------------------- */
+  .cadastre {
+    position: relative;
+  }
+  .cadastre::before,
+  .cadastre::after {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    border-color: rgb(200 150 62 / 0.85);
+    border-style: solid;
+    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+  .cadastre::before {
+    top: 10px;
+    left: 10px;
+    border-width: 1.5px 0 0 1.5px;
+  }
+  .cadastre::after {
+    bottom: 10px;
+    right: 10px;
+    border-width: 0 1.5px 1.5px 0;
+  }
+  .cadastre:hover::before {
+    top: 6px;
+    left: 6px;
+    width: 22px;
+    height: 22px;
+  }
+  .cadastre:hover::after {
+    bottom: 6px;
+    right: 6px;
+    width: 22px;
+    height: 22px;
+  }
+
+  /* ---- Fond en papier millimétré, rappel du plan d'architecte ---------- */
+  .blueprint {
+    background-image: linear-gradient(rgb(var(--line) / 0.55) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(var(--line) / 0.55) 1px, transparent 1px);
+    background-size: 28px 28px;
+  }
+
+  .glass {
+    @apply bg-surface/80 backdrop-blur-xl backdrop-saturate-150;
+  }
+
+  /* ---- Effet de balayage pour les squelettes de chargement ------------- */
+  .skeleton {
+    @apply relative overflow-hidden bg-surface-2;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full animate-shimmer;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      rgb(var(--surface) / 0.85),
+      transparent
+    );
+  }
+
+  .link-underline {
+    @apply relative;
+    background-image: linear-gradient(currentColor, currentColor);
+    background-size: 0% 1px;
+    background-position: 0 100%;
+    background-repeat: no-repeat;
+    transition: background-size 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .link-underline:hover {
+    background-size: 100% 1px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  /* Dégradé de marque réutilisable */
+  .bg-brand-gradient {
+    background-image: linear-gradient(135deg, #0b3b36 0%, #0e4d45 45%, #157a6e 100%);
+  }
+  .text-gradient-brass {
+    background-image: linear-gradient(100deg, #e3c58a 0%, #c8963e 55%, #d6ac5f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+}

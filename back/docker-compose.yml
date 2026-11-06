@@ -1,0 +1,85 @@
+# ============================================================
+# ImmoFlow AI — pile de développement complète
+# Démarrage : docker compose up --build
+# API       : http://localhost:8000/docs
+# ============================================================
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: immoflow_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-immoflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-immoflow}
+      POSTGRES_DB: ${POSTGRES_DB:-immoflow}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-immoflow} -d ${POSTGRES_DB:-immoflow}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: immoflow_redis
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: immoflow_api
+    env_file:
+      - ./backend/.env
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - uploads_data:/app/storage
+    entrypoint: ["/app/docker/entrypoint.sh"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4", "--proxy-headers"]
+    restart: unless-stopped
+
+  # Worker Celery (optionnel : tâches asynchrones, emails, rapports)
+  worker:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: immoflow_worker
+    env_file:
+      - ./backend/.env
+    environment:
+      POSTGRES_HOST: db
+      REDIS_HOST: redis
+    depends_on:
+      - api
+    command: ["celery", "-A", "app.worker.celery_app", "worker", "--loglevel=info"]
+    profiles: ["workers"]
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  uploads_data:
